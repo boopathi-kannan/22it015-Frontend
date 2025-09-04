@@ -1,30 +1,24 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { getRedirect } from "../services/api.jsx";
 
 export default function RedirectPage() {
-  const { code } = useParams();
-  const [message, setMessage] = useState("Redirecting...");
+  const { shortCode } = useParams();
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const stored = JSON.parse(localStorage.getItem("urls")) || [];
-    const found = stored.find((item) => item.code === code);
-
-    if (found) {
-      const now = new Date();
-      if (new Date(found.expiry) > now) {
-     
-        window.location.href = found.originalUrl;
-      } else {
-        setMessage("This link has expired!");
+    const fetchAndRedirect = async () => {
+      try {
+        const res = await getRedirect(shortCode);
+        if (res.longUrl) {
+          window.location.href = res.longUrl;
+        }
+      } catch {
+        setError("❌ Invalid or expired link");
       }
-    } else {
-      setMessage("Invalid or unknown link.");
-    }
-  }, [code]);
+    };
+    fetchAndRedirect();
+  }, [shortCode]);
 
-  return (
-    <div className="card">
-      <h2>{message}</h2>
-    </div>
-  );
+  return <h3>{error ? error : "Redirecting..."}</h3>;
 }
